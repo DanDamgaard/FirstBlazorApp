@@ -1,4 +1,6 @@
 ﻿@page "/fetchdata"
+@using FirstBlazorApp.Data;
+@using Newtonsoft.Json;
 @inject HttpClient Http
 
 <PageTitle>Weather forecast</PageTitle>
@@ -7,41 +9,66 @@
 
 <p>This component demonstrates fetching data from the server.</p>
 
-@if (forecasts == null)
+<label>Chose city</label>
+<br />
+<input type="text" @bind="@city"></input>
+<button class="btn btn-primary" @onclick="getTemp">Get weather</button>
+
+@if (forcast == null)
 {
     <p><em>Loading...</em></p>
 }
 else
 {
+    <h1>Weather in @headerCity</h1>
     <table class="table">
         <thead>
             <tr>
                 <th>Date</th>
                 <th>Temp. (C)</th>
-                <th>Temp. (F)</th>
-                <th>Summary</th>
+                <th>Wind speed. (m/s)</th>
             </tr>
         </thead>
         <tbody>
-            @foreach (var forecast in forecasts)
-            {
-                <tr>
-                    <td>@forecast.Date.ToShortDateString()</td>
-                    <td>@forecast.TemperatureC</td>
-                    <td>@forecast.TemperatureF</td>
-                    <td>@forecast.Summary</td>
-                </tr>
-            }
+            <tr>
+                <td>@date.ToShortDateString()</td>
+                <td>@forcast.main.temp</td>
+                <td>@forcast.wind.speed</td>
+            </tr>
         </tbody>
     </table>
 }
 
 @code {
+    private string headerCity = "london";
+    private string city = "london";
+    string APIKey = "d0dfd7b1eab21642c0cc7b5d80c1d551";
+
+    public DateTime date = DateTime.Today.Date;
+    private Forcast? forcast; 
+
     private WeatherForecast[]? forecasts;
 
     protected override async Task OnInitializedAsync()
     {
-        forecasts = await Http.GetFromJsonAsync<WeatherForecast[]>("sample-data/weather.json");
+
+        await getTemp();
+
+    }
+
+    private async Task getTemp()
+    {
+        try
+        {
+            city = city.Trim();
+            forcast = await Http.GetFromJsonAsync<Forcast>($"weather?q={city}&units=metric&appid={APIKey}");
+            headerCity = city;
+        }
+        catch (Exception ex)
+        {
+            city = headerCity;
+            Console.WriteLine(ex.ToString());
+        }
     }
 
     public class WeatherForecast
